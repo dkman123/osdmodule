@@ -6,7 +6,7 @@ This was written using TeamSpeak 3.0.17, API 20.  So if it doesn't work on a fut
 It uses dzen2 to produce the overlay window.  You can get that by typing (debian style systems):
 sudo apt-get install dzen2
 
-unzip that to your /[ts3]/plugins/lua_plugin
+put the files into your /[ts3]/plugins/lua_plugin/osdmodule/ folder
 
 You'll need to do Settings - Plugins
 Check Lua Plugin
