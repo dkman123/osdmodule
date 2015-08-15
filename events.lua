@@ -62,20 +62,26 @@ local TalkStatus = {
 ]]
 		if (val==0) then  -- 0 = not talking/transmitting
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, key, ts3defs.ClientProperties.CLIENT_NICKNAME);
-			msg = msg .. "\n^fg(#" .. silentColor .. ")" .. clientName;
-			numClients = numClients + 1;
+			if error == ts3errors.ERROR_ok then
+				msg = msg .. "\n^fg(#" .. silentColor .. ")" .. clientName;
+				numClients = numClients + 1;
+			end
 		end
 
 		if (val==1) then  -- 1 = talking (really either voice activated transmitting or push-to-talk is pressed)
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, key, ts3defs.ClientProperties.CLIENT_NICKNAME);
-			msg = msg .. "\n^fg(#" .. talkingColor .. ")" .. clientName;
-			numClients = numClients + 1;
+			if error == ts3errors.ERROR_ok then
+				msg = msg .. "\n^fg(#" .. talkingColor .. ")" .. clientName;
+				numClients = numClients + 1;
+			end
 		end
 
 		if (val==2) then  -- 2 = talking While Disabled (muted but attempting to transmit)
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, key, ts3defs.ClientProperties.CLIENT_NICKNAME);
-			msg = msg .. "\n^fg(#" .. talkingWhileDisabledColor .. ")" .. clientName;
-			numClients = numClients + 1;
+			if error == ts3errors.ERROR_ok then
+				msg = msg .. "\n^fg(#" .. talkingWhileDisabledColor .. ")" .. clientName;
+				numClients = numClients + 1;
+			end
 		end
 	end
 
