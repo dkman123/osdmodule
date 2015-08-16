@@ -24,26 +24,32 @@ local MenuIDs = {
 -- Add this value to above menuID when passing the ID to setPluginMenuEnabled. See demo.lua for an example.
 local moduleMenuItemID = 0
 
-local clients = {}
+local clients = {}		-- the client list
+local numClients=0;		-- the number of clients displayed in the window
+local channelName = "TeamSpeak";	-- the channel you are in
 
-local numClients=0;
+-- variable, you can safely change this part ---------------------------------------------------------------------------
+-- (x,y) coordinates for the top left corner of the window.  
+local x="50";			-- is the left to right position. 0 is left, your resolution defines the right coordinate (ex assuming 1920x1200, 1920 is the maximum x)
+local y="300";			-- is the up-down position. 0 is top, your resolution defines the bottom coordinate (ex assuming 1920x1200, 1200 is the maximum y)
+local w="160";			-- width of the window.  make this wide enough to fit the names
+local fontSize="12";	-- the font size for the display window
 
--- added local
+-- you can use Gimp and put the HTML notation value for colors you like
+local bgColor="6699FF";			-- background color
+local talkingColor="ff0000";	-- users talking/transmitting
+local silentColor="00ff00";		-- users not talking/transmitting
+local talkingWhileDisabledColor="00ffff";	-- users attempting to transmit while muted
+
+-- you can either show everyone or just who is talking (1 = everyone, 0 = just talking)
+-- if you are in channels with lots of users you may only want to show who is talking
+local showEveryone=1;
+
+-- use the channel name as the title bar of the display window (1 = use channel name, 0 = always show "TeamSpeak")
+local useChannelName=0;
+-- end safe variable section -------------------------------------------------------------------------------------------
+
 local function onTalkStatusChangeEvent(serverConnectionHandlerID, status, isReceivedWhisper, clientID)
-	-- variable, you can safely change this part
-	-- (x,y) coordinates for the top left corner of the window.  
-	local x="50";		-- is the left to right position. 0 is left, your resolution defines the right coordinate (ex assuming 1920x1200, 1920 is the maximum x)
-	local y="300";	-- is the up-down position. 0 is top, your resolution defines the bottom coordinate (ex assuming 1920x1200, 1200 is the maximum y)
-	local w="160";	-- width of the window.  make this wide enough to fit the names
-	local fontSize="12";
-	
-	-- you can use Gimp and put the HTML notation value for colors you like
-	local bgColor="6699FF";
-	local talkingColor="ff0000"; -- maybe FFF2C7
-	local silentColor="00ff00";  -- maybe FF69F2
-	local talkingWhileDisabledColor="00ffff";
-
-	-- begin code
 	numClients=0;
 	local msg="";
 
@@ -52,7 +58,7 @@ local function onTalkStatusChangeEvent(serverConnectionHandlerID, status, isRece
 
 	-- get the list of clients
 	for key,val in pairs(clients) do
-		-- based on the status color the client's name
+		-- based on the status, color the client's name
 --[[
 local TalkStatus = {
 	STATUS_NOT_TALKING = 0,
@@ -68,7 +74,7 @@ local TalkStatus = {
 			end
 		end
 
-		if (val==1) then  -- 1 = talking (really either voice activated transmitting or push-to-talk is pressed)
+		if (val==1 and showEveryone==1) then  -- 1 = talking (really either voice activated transmitting or push-to-talk is pressed)
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, key, ts3defs.ClientProperties.CLIENT_NICKNAME);
 			if error == ts3errors.ERROR_ok then
 				msg = msg .. "\n^fg(#" .. talkingColor .. ")" .. clientName;
@@ -76,7 +82,7 @@ local TalkStatus = {
 			end
 		end
 
-		if (val==2) then  -- 2 = talking While Disabled (muted but attempting to transmit)
+		if (val==2 and showEveryone==1) then  -- 2 = talking While Disabled (muted but attempting to transmit)
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, key, ts3defs.ClientProperties.CLIENT_NICKNAME);
 			if error == ts3errors.ERROR_ok then
 				msg = msg .. "\n^fg(#" .. talkingWhileDisabledColor .. ")" .. clientName;
@@ -93,7 +99,7 @@ local TalkStatus = {
 
 	-- display the window
 	os.execute("pkill -TERM -f \"dzen2.*TeamSpeak\"")
-	os.execute("echo \"TeamSpeak " .. msg .. "\" | dzen2 -p 0 -y " .. y .. " -x " .. x .. " -w " .. w .. " -bg '#" .. bgColor .. "' -fg '#161616' -fn '-*-bitstream vera sans mono-medium-r-normal-*-" .. fontSize .. "-*-*-*-*-*-*-*' -l " .. numClients .. " -e \"onstart=uncollapse\" -title-name \"TeamSpeak\" &")
+	os.execute("echo \"" .. channelName .. " " .. msg .. "\" | dzen2 -p 0 -y " .. y .. " -x " .. x .. " -w " .. w .. " -bg '#" .. bgColor .. "' -fg '#161616' -fn '-*-bitstream vera sans mono-medium-r-normal-*-" .. fontSize .. "-*-*-*-*-*-*-*' -l " .. numClients .. " -e \"onstart=uncollapse\" -title-name \"TeamSpeak\" &")
 --	os.execute("echo \"DEBUG TeamSpeak " .. msg .. "\" >> ~/Documents/ts3debug.log")
 
 --[[
@@ -120,16 +126,44 @@ local ConnectStatus = {
 	if (status==0) then
 		os.execute("pkill -TERM -f \"dzen2.*TeamSpeak\"")
 		return
+	else
+		-- Get name of this channel
+		local myClientID, error = ts3.getClientID(serverConnectionHandlerID)
+		local myChannelID, error = ts3.getChannelOfClient(serverConnectionHandlerID, myClientID)
+		local myChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, myChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
+		if error == ts3errors.ERROR_ok and useChannelName==1 then
+			channelName = myChannelName
+		else
+			channelName = "TeamSpeak"
+		end
 	end
 end
 
-local function onNewChannelEvent(serverConnectionHandlerID, channelID, channelParentID)
-    ts3.printMessageToCurrentTab("osdModule: onNewChannelEvent: " .. serverConnectionHandlerID .. " " .. channelID .. " " .. channelParentID)
-
+local function onClientMoveEvent(serverConnectionHandlerID, clientID, oldChannelID, newChannelID, visibility, moveMessage)
+	--ts3.printMessageToCurrentTab("osdModule: onChannelMoveEvent: " .. serverConnectionHandlerID .. " " .. oldChannelID .. " " .. newChannelID)
+	--os.execute("echo \"DEBUG TeamSpeak onClientMoveEvent event " .. oldChannelID .. ", " .. newChannelID .. "\" >> ~/Documents/ts3debug.log")
+	
 	-- Get name of this channel
-	local channelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, channelID, ts3defs.ChannelProperties.CHANNEL_NAME)
-	--os.execute("echo \"DEBUG TeamSpeak channel event " .. channelID .. ", " .. channelName .. "\" >> ~/Documents/ts3debug.log")
-	-- I could save the channel name and display that instead of "TeamSpeak" at the top of the window
+	local myChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, newChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
+	if error == ts3errors.ERROR_ok and useChannelName==1 then
+		channelName = myChannelName
+	else
+		channelName = "TeamSpeak"
+	end
+
+	-- clear the client list
+	for key in pairs (clients) do
+		clients[key] = nil
+	end
+
+	-- Get the list of users in the channel
+	local clientList, error = ts3.getChannelClientList(serverConnectionHandlerID, newChannelID)
+	for i=1, #clientList do
+		local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, clientList[i], ts3defs.ClientProperties.CLIENT_NICKNAME)
+		if error == ts3errors.ERROR_ok then
+			clients[clientList[i]]=0;
+		end
+	end	
 end
 
 --
@@ -152,6 +186,6 @@ osdmodule_events = {
 	moduleMenuItemID = moduleMenuItemID,
 	onMenuItemEvent = onMenuItemEvent,
 	onConnectStatusChangeEvent = onConnectStatusChangeEvent,
-	onNewChannelEvent = onNewChannelEvent,
+	onClientMoveEvent = onClientMoveEvent,
 	onTalkStatusChangeEvent = onTalkStatusChangeEvent
 }
