@@ -50,11 +50,7 @@ local registeredEvents = {
 	createMenus = createMenus,
 	onTalkStatusChangeEvent = osdmodule_events.onTalkStatusChangeEvent,
 	onConnectStatusChangeEvent = osdmodule_events.onConnectStatusChangeEvent,
-	onNewChannelEvent = osdmodule_events.onNewChannelEvent,
-	--[[
-	onTextMessageEvent = osdmodule_events.onTextMessageEvent,
-	onPluginCommandEvent = osdmodule_events.onPluginCommandEvent,
-]]
+	onClientMoveEvent = osdmodule_events.onClientMoveEvent,
 	onMenuItemEvent = osdmodule_events.onMenuItemEvent
 }
 
