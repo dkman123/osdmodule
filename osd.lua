@@ -58,11 +58,6 @@ local function test(serverConnectionHandlerID)
 	ts3.printMessageToCurrentTab("I am in channel ID: " .. myChannelName .. " (" .. myChannelID .. ")")
 end
 
--- Run with "/lua run osdmodule.argsTest <arg1> <arg2> <arg3>", args can be numbers or strings
-local function argsTest(serverConnectionHandlerID, arg1, arg2, arg3)
-	ts3.printMessageToCurrentTab("argsTest: " .. serverConnectionHandlerID .. " - " .. arg1 .. " " .. arg2 .. " " .. arg3)
-end
-
 -- Run with "/lua run osdmodule.showClients"
 local function showClients(serverConnectionHandlerID)
 	local clients, error = ts3.getClientList(serverConnectionHandlerID)
@@ -91,6 +86,7 @@ Conditionals:
 	~= not equal
 	== equal
 
+	use space to separate args when calling commands from the TS3 chat 
 
 	-- Get own client ID
 	local myClientID, error = ts3.getClientID(serverConnectionHandlerID)
@@ -164,7 +160,6 @@ end
 
 osdmodule = {
 	test = test,
-	argsTest = argsTest,
 	showClients = showClients,
 	showClientsInChannel = showClientsInChannel,
 	muteClient = muteClient,
