@@ -39,7 +39,7 @@ local fontSize="12";	-- the font size for the display window
 local bgColor="6699FF";			-- background color
 local talkingColor="ff0000";	-- users talking/transmitting
 local silentColor="00ff00";		-- users not talking/transmitting
-local talkingWhileDisabledColor="00ffff";	-- users attempting to transmit while muted
+local talkingWhileDisabledColor="fdff37";	-- users attempting to transmit while muted
 
 -- you can either show everyone or just who is talking (1 = everyone, 0 = just talking)
 -- if you are in channels with lots of users you may only want to show who is talking
