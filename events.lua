@@ -31,7 +31,7 @@ local channelName = "TeamSpeak";	-- the channel you are in
 -- variable, you can safely change this part ---------------------------------------------------------------------------
 -- (x,y) coordinates for the top left corner of the window.  
 local x="50";			-- is the left to right position. 0 is left, your resolution defines the right coordinate (ex assuming 1920x1200, 1920 is the maximum x)
-local y="300";			-- is the up-down position. 0 is top, your resolution defines the bottom coordinate (ex assuming 1920x1200, 1200 is the maximum y)
+local y="550";			-- is the up-down position. 0 is top, your resolution defines the bottom coordinate (ex assuming 1920x1200, 1200 is the maximum y)
 local w="160";			-- width of the window.  make this wide enough to fit the names
 local fontSize="12";	-- the font size for the display window
 
@@ -122,13 +122,15 @@ local ConnectStatus = {
     --ts3.printMessageToCurrentTab("osdModule: onConnectStatusChangeEvent: " .. serverConnectionHandlerID .. " " .. status .. " " .. errorNumber)
 	--os.execute("echo \"DEBUG TeamSpeak connect event " .. status .. "\" >> ~/Documents/ts3debug.log")
 
+	local myClientID, error = ts3.getClientID(serverConnectionHandlerID)
 	-- when disconnecting from the server kill the window (otherwise it will sit there on top until manually killed)
-	if (status==0) then
+	-- if getClientID returns a value then someone else disconnected, so don't kill the window
+	--ts3.printMessageToCurrentTab("osdModule: onConnectStatusChangeEvent: status=" .. status .. ", errorNumber=" .. errorNumber .. ", local error=" .. error .. ", myClientID=" .. myClientID)
+	if (status==0 and myClientID==0) then
 		os.execute("pkill -TERM -f \"dzen2.*TeamSpeak\"")
 		return
 	else
 		-- Get name of this channel
-		local myClientID, error = ts3.getClientID(serverConnectionHandlerID)
 		local myChannelID, error = ts3.getChannelOfClient(serverConnectionHandlerID, myClientID)
 		local myChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, myChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
 		if error == ts3errors.ERROR_ok and useChannelName==1 then
