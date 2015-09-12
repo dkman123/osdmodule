@@ -54,7 +54,7 @@ local function onTalkStatusChangeEvent(serverConnectionHandlerID, status, isRece
 	local msg="";
 
 	-- set the client status for the event received
-	clients[clientID]=status;
+	clients[clientID] = status;
 
 	-- get the list of clients
 	for key,val in pairs(clients) do
@@ -117,20 +117,31 @@ local function onClientMoveEvent(serverConnectionHandlerID, clientID, oldChannel
 	-- get my clientID	
 	local myClientID, error = ts3.getClientID(serverConnectionHandlerID)
 
+	-- Get name of this channel
+	local newChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, newChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
+
+	-- get my channel name
+	local myChannelID, error = ts3.getChannelOfClient(serverConnectionHandlerID, myClientID)
+
+	-- get the client's name
+	local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, clientID, ts3defs.ClientProperties.CLIENT_NICKNAME)
+
+	ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: myID: " .. myClientID .. ", myChannelID: " .. myChannelID .. ", moving (" .. clientID .. ", " .. clientName .. "), newChannelID (" .. newChannelID .. ", " .. newChannelName)
 
 	-- if I left the server then close the window
 	--ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: myClientID=" .. myClientID .. ", clientID=" .. clientID .. ", newChannelID=" .. newChannelID .. ", moveMessage=" .. moveMessage)
 	if (myClientID==0 and newChannelID==0) then
-		--ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: killing OSD")
+		ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: (I exited) killing OSD")
 		os.execute("pkill -TERM -f \"dzen2.*TeamSpeak\"")
 		return
 	elseif (myClientID==clientID) then
 		-- else if I moved 
+		ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: (I moved) reloading client list")
 	
 		-- Get name of this channel
-		local myChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, newChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
+		--local newChannelName, error = ts3.getChannelVariableAsString(serverConnectionHandlerID, newChannelID, ts3defs.ChannelProperties.CHANNEL_NAME)
 		if error == ts3errors.ERROR_ok and useChannelName==1 then
-			channelName = myChannelName
+			channelName = newChannelName
 		else
 			channelName = "TeamSpeak"
 		end
@@ -145,17 +156,24 @@ local function onClientMoveEvent(serverConnectionHandlerID, clientID, oldChannel
 		for i=1, #clientList do
 			local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, clientList[i], ts3defs.ClientProperties.CLIENT_NICKNAME)
 			if error == ts3errors.ERROR_ok then
-				clients[clientList[i]]=0;
+				clients[clientList[i]] = TalkStatus.STATUS_NOT_TALKING
 			end --if
 		end --for
-	end --else if
+	else
+		-- someone else moved, see if someone new joined my channel
+		ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: (someone else moved) add user")
+		--local myChannelID, error = ts3.getChannelOfClient(serverConnectionHandlerID, myClientID)
+		if (myChannelID==newChannelID) then
+			clients[clientID] = TalkStatus.STATUS_NOT_TALKING
+		end --if
+	end --else
 	
 	-- get the moved client's name
-	local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, clientID, ts3defs.ClientProperties.CLIENT_NICKNAME)
-	if error == ts3errors.ERROR_ok then
-		--ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: clientName=" .. clientName)
-		clients[myClientID] = 0;
-	end
+	--local clientName, error = ts3.getClientVariableAsString(serverConnectionHandlerID, clientID, ts3defs.ClientProperties.CLIENT_NICKNAME)
+--	if error == ts3errors.ERROR_ok then
+--		--ts3.printMessageToCurrentTab("osdModule: onClientMoveEvent: clientName=" .. clientName)
+--		clients[clientID] = TalkStatus.STATUS_NOT_TALKING
+--	end
 
 end
 
