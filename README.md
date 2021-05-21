@@ -10,7 +10,9 @@ put the files into your /[ts3]/plugins/lua_plugin/osdmodule/ folder
 
 --
 
-You'll need to go to Settings - Plugins.
+You'll need to go to Tools - Options
+
+AddOns - Plugins.
 
 Check Lua Plugin.
 
